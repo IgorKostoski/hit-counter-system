@@ -1,11 +1,12 @@
+name: Go CI Build and Test
+
 on:
   push:
-    branches: [ main ]
+    branches: [ main ] 
     paths:
-      - 'app/api/**go'
-      - 'app/app/go.mod'
+      - 'app/api/**.go'
+      - 'app/api/go.mod'
       - 'app/api/go.sum'
-
   pull_request:
     branches: [ main ]
     paths:
@@ -35,6 +36,5 @@ jobs:
 
       - name: Test
         run: go test -v ./...
-
       - name: Build
-        run: go build -v -o hit-counter-api
+        run: go build -v -o hit-counter-api .
