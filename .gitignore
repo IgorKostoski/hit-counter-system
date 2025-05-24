@@ -1,0 +1,45 @@
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+app/api/hit-counter-api # The compiled binary from our Dockerfile's build stage
+
+# Go module cache and vendor directory (if you were to use vendor/)
+# vendor/ # Uncomment if you use go mod vendor
+pkg/
+bin/
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# IDE and editor specific files
+.idea/
+.vscode/
+*.swp
+*~
+*.bak
+
+# Local environment files (if you create any, e.g., .env)
+.env
+local.env
+
+# Terraform state and plan files (local only)
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ansible temp files
+*.retry
+
+# Docker local build cache / context files
+.dockerignore # Though Docker specific, good to have here if also in root
