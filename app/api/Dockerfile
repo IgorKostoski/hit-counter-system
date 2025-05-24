@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
@@ -8,6 +8,23 @@ RUN go mod download
 COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /hit-counter-api .
+
+
+FROM golang:1.23-alpine AS development
+
+WORKDIR /app
+
+RUN apk add --no-cache git
+
+RUN go install github.com/cosmtrek/air@v1.51.0
+
+COPY go.mod go.sum ./
+
+RUN go mod download
+
+COPY . .
+
+CMD ["air", "-c", ".air.toml"]
 
 FROM alpine:latest
 
