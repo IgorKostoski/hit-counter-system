@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: hit-counter-app
+data:
+  POSTGRES_DB: hitcounter_k8s_db
