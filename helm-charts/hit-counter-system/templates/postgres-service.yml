@@ -1,0 +1,23 @@
+{{- if .Values.postgresql.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.postgresql.service.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.postgresql.name }} # Service discovery
+    helm.sh/chart: {{ include "hit-counter-system.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/component: database
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.postgresql.service.port }}
+      targetPort: tcp-postgres # Matches the port name in postgres-deployment.yml
+      protocol: TCP
+      name: tcp-postgres
+  selector:
+    app.kubernetes.io/name: {{ .Values.postgresql.name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}

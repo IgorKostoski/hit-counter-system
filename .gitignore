@@ -38,8 +38,30 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 
+
 # Ansible temp files
 *.retry
 
 # Docker local build cache / context files
 .dockerignore # Though Docker specific, good to have here if also in root
+
+
+# ... other ignored files ...
+
+# Executables / Binaries
+minikube-darwin-arm64
+minikube # General minikube executable
+kubectl
+helm
+
+*.dmg
+*.pkg
+*.deb
+*.rpm
+*.iso
+*.tar.gz
+*.zip # Be careful with zips if you intend to commit some specific ones
+
+# Specific to this project if downloaded locally
+terraform
+ansible # if installed locally in project

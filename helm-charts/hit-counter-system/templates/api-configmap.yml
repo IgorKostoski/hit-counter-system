@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-config" .Values.api.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.api.name }}
+    helm.sh/chart: {{ include "hit-counter-system.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/component: application
+data:
+  APP_PORT: {{ .Values.api.config.APP_PORT | quote }}
+  GIN_MODE: {{ .Values.api.config.GIN_MODE | quote }}
+  {{- if .Values.postgresql.enabled }}
+  DB_HOST: {{ .Values.postgresql.service.name | quote }}
+  DB_PORT: {{ .Values.postgresql.service.port | quote }}
+  DB_NAME: {{ .Values.postgresql.auth.database | quote }}
+  {{- else }}
+  # If PostgreSQL is not enabled by this chart, these would need to be
+  # configured to point to an external PostgreSQL instance.
+  DB_HOST: {{ .Values.api.config.DB_HOST | default "override-me-db-host" | quote }}
+  DB_PORT: {{ .Values.api.config.DB_PORT | default "5432" | quote }}
+  DB_NAME: {{ .Values.api.config.DB_NAME | default "override-me-db-name" | quote }}
+  {{- end }}

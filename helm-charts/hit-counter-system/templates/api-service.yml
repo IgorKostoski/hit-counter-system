@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ printf "%s-service" .Values.api.name }}
+  namespace: {{ default .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.api.name }}
+    helm.sh/chart: {{ include "hit-counter-system.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/component: application
+spec:
+  type: {{ .Values.api.service.type }}
+  ports:
+    - port: {{ .Values.api.service.port }}
+      targetPort: http # Matches the port name in api-deployment.yml
+      protocol: TCP
+      name: http
+      {{- if (and (eq .Values.api.service.type "NodePort") (not (empty .Values.api.service.nodePort))) }}
+      nodePort: {{ .Values.api.service.nodePort }}
+      {{- end }}
+  selector:
+    app.kubernetes.io/name: {{ .Values.api.name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}

@@ -1,0 +1,17 @@
+{{- /*
+This template is effectively disabled if .Release.Namespace is the same as .Values.namespace
+to avoid conflict with Helm's --create-namespace flag.
+If deploying to a namespace different from .Release.Namespace (less common for primary app chart),
+this could still be used.
+*/}}
+{{- if and .Values.namespace (ne .Values.namespace .Release.Namespace) }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "hit-counter-system.name" . }}
+    helm.sh/chart: {{ include "hit-counter-system.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}

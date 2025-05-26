@@ -1,0 +1,68 @@
+{{/*
+This NOTES.txt provides instructions on how to access the Hit Counter API service.
+*/}}
+
+{{- define "hit-counter-system.apiServiceInfo" -}}
+  {{- $apiServiceName := printf "%s-service" .Values.api.name -}}
+  {{- $namespace := .Release.Namespace -}}
+
+  {{- if eq .Values.api.service.type "ClusterIP" -}}
+  Your Hit Counter API service is of type ClusterIP. To access it, you can use port-forwarding:
+  1. Get the API pod name:
+     export API_POD_NAME=$(kubectl get pods --namespace {{ $namespace }} -l "app.kubernetes.io/name={{ .Values.api.name }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
+     echo "API Pod Name: $API_POD_NAME"
+
+  2. Port-forward to the API pod (replace 8080 with a local port if needed):
+     kubectl --namespace {{ $namespace }} port-forward $API_POD_NAME 8080:{{ .Values.api.config.APP_PORT }}
+
+  3. Access the API at http://127.0.0.1:8080/api/v1/...
+     (e.g., curl http://127.0.0.1:8080/api/v1/count/somekey)
+
+  {{- else if eq .Values.api.service.type "NodePort" -}}
+  Your Hit Counter API service is of type NodePort. To access it:
+  1. Get the NodePort:
+     export NODE_PORT=$(kubectl get --namespace {{ $namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ $apiServiceName }})
+     echo "Node Port: $NODE_PORT"
+
+  2. Get the IP address of one of your cluster nodes (Minikube IP, Kind node IP, etc.):
+     export NODE_IP=$(kubectl get nodes --namespace {{ $namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+     echo "Node IP: $NODE_IP (this might be an internal IP for some setups like Kind/Docker Desktop)"
+     echo "For Minikube, you can also use: minikube ip"
+     echo "For Kind/k3d, if Docker is local, try 'localhost' or '127.0.0.1' as the Node IP if the above doesn't work directly."
+
+  3. Access the API at http://$NODE_IP:$NODE_PORT/api/v1/...
+     (e.g., curl http://$NODE_IP:$NODE_PORT/api/v1/count/somekey)
+     Alternatively, for Minikube: minikube service {{ $apiServiceName }} --url -n {{ $namespace }}
+
+  {{- else if eq .Values.api.service.type "LoadBalancer" -}}
+  Your Hit Counter API service is of type LoadBalancer.
+  1. Get the LoadBalancer Ingress IP (this may take a few minutes to become available):
+     kubectl get svc --namespace {{ $namespace }} {{ $apiServiceName }} --watch
+     (Wait until an EXTERNAL-IP is assigned)
+     export SERVICE_IP=$(kubectl get svc --namespace {{ $namespace }} {{ $apiServiceName }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+     echo "Service IP: $SERVICE_IP"
+
+  2. Access the API at http://$SERVICE_IP:{{ .Values.api.service.port }}/api/v1/...
+     (e.g., curl http://$SERVICE_IP:{{ .Values.api.service.port }}/api/v1/count/somekey)
+
+  {{- else -}}
+  Unknown service type for API: {{ .Values.api.service.type }}
+  {{- end }}
+{{- end -}}
+
+
+The Hit Counter System has been deployed.
+
+{{ template "hit-counter-system.apiServiceInfo" . }}
+
+PostgreSQL Information:
+  Service Name: {{ .Values.postgresql.service.name }}
+  Database Name: {{ .Values.postgresql.auth.database }}
+  Username: {{ .Values.postgresql.auth.username }}
+  (Password is in the secret: {{ printf "%s-secret" .Values.postgresql.name }})
+
+To check the status of your release:
+  helm status {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+To uninstall the release:
+  helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}

@@ -1,0 +1,75 @@
+#namespace: "hit-counter-app"
+
+api:
+  name: "hit-counter-api"
+  replicaCount: 1
+  image:
+    repository: "hit-counter-api"
+    pullPolicy: IfNotPresent
+    tag: "k8s-v1"
+
+  service:
+    type: NodePort
+    port: 80
+    targetPort: 8080
+
+  config:
+    APP_PORT: "8080"
+    GIN_MODE: "release"
+    DB_PORT: "5432"
+
+  resources: {}
+  readinessProbe:
+    path: "/metrics"
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  livenessProbe:
+    path: "/metrics"
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+
+postgresql:
+  enabled: true
+  name: "postgres-db"
+  image:
+    repository: "postgres"
+    tag: "15-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    name: "postgres-db-service"
+    port: 5432
+
+  auth:
+    username: "testuser"
+    password: "supersecretpassword"
+    database: "hitcounter_helm_db"
+
+  persistence:
+    enabled: false
+
+tests:
+  enabled: true # Set to true to run tests, false to skip them by default
+
+# ... (api, postgresql, tests sections) ...
+
+ingress:
+  enabled: false # This will make the `{{- if .Values.ingress.enabled }}` block in ingress.yaml false
+  # You can leave other ingress sub-keys empty or comment them out if enabled is false
+  # className: ""
+  # annotations: {}
+  # hosts: []
+  # tls: []
+
+# ... (api, postgresql, tests, ingress sections) ...
+
+autoscaling:
+  enabled: false # This will make the `{{- if .Values.autoscaling.enabled }}` block in hpa.yaml false
+  # minReplicas: 1
+  # maxReplicas: 100
+  # targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
