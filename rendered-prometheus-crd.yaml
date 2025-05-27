@@ -1,0 +1,64 @@
+---
+# Source: kube-prometheus-stack/templates/prometheus/prometheus.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: prometheus-stack-kube-prom-prometheus
+  namespace: monitoring
+  labels:
+    app: kube-prometheus-stack-prometheus
+    
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: prometheus-stack
+    app.kubernetes.io/version: "57.0.0"
+    app.kubernetes.io/part-of: kube-prometheus-stack
+    chart: kube-prometheus-stack-57.0.0
+    release: "prometheus-stack"
+    heritage: "Helm"
+spec:
+  image: "quay.io/prometheus/prometheus:v2.50.1"
+  version: v2.50.1
+  externalUrl: http://prometheus-stack-kube-prom-prometheus.monitoring:9090
+  paused: false
+  replicas: 1
+  shards: 1
+  logLevel:  info
+  logFormat:  logfmt
+  listenLocal: false
+  enableAdminAPI: false
+  retention: "7d"
+  tsdb:
+    outOfOrderTimeWindow: 0s
+  walCompression: true
+  routePrefix: "/"
+  serviceAccountName: prometheus-stack-kube-prom-prometheus
+  serviceMonitorSelector: {}
+  serviceMonitorNamespaceSelector: {}
+  podMonitorSelector: {}
+  podMonitorNamespaceSelector: {}
+  probeSelector:
+    matchLabels:
+      release: "prometheus-stack"
+
+  probeNamespaceSelector: {}
+  securityContext:
+    fsGroup: 2000
+    runAsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  ruleNamespaceSelector: {}
+  ruleSelector: {}
+  scrapeConfigSelector:
+    matchLabels:
+      release: "prometheus-stack"
+
+  scrapeConfigNamespaceSelector: {}
+  storage:
+    emptyDir: {}
+  portName: http-web
+  enforcedKeepDroppedTargets: 0
+  minReadySeconds: 0
+  maximumStartupDurationSeconds: 0
+  hostNetwork: false

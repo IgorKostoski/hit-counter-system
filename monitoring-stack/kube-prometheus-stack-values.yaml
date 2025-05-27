@@ -1,0 +1,94 @@
+# monitoring-stack/kube-prometheus-stack-values.yaml
+
+# Default namespace for the stack is 'monitoring', we can keep it or change it.
+# If you change it, ensure you use it in helm install command.
+# namespaceOverride: "monitoring"
+
+# Core components
+prometheus:
+  enabled: true
+  prometheusSpec:
+    # Enable scraping based on ServiceMonitor custom resources in any namespace
+    # that has the label `prometheus.io/scrape=true` (or another chosen label).
+    # Or configure specific namespaces to scan without label.
+    serviceMonitorSelectorNilUsesHelmValues: false # Set to true to use serviceMonitorSelector
+    serviceMonitorNamespaceSelector: {} # Empty means all namespaces, or specify: { matchLabels: { "prometheus.io/scrape": "true" } }
+    serviceMonitorSelector: {} # Empty means all ServiceMonitors, or specify: { matchLabels: { "release": "prometheus" } }
+
+    # PodMonitor selector (similar to ServiceMonitor but for Pods directly)
+    podMonitorSelectorNilUsesHelmValues: false
+    podMonitorNamespaceSelector: {}
+    podMonitorSelector: {}
+
+    # Rule selector (for Prometheus alerting rules)
+    ruleSelectorNilUsesHelmValues: false
+    ruleNamespaceSelector: {}
+    ruleSelector: {}
+
+    # Storage: For local demo, ephemeral is fine. For production, use PersistentVolumeClaims.
+    # For Minikube, you might need to configure storageClass or use hostPath.
+    storageSpec:
+      emptyDir: {} # For ephemeral storage. Replace with volumeClaimTemplate for persistence.
+    # volumeClaimTemplate:
+    #   spec:
+    #     accessModes: ["ReadWriteOnce"]
+    #     resources:
+    #       requests:
+    #         storage: 10Gi # Adjust size as needed
+    #     # storageClassName: "standard" # Or your specific storage class
+
+    # Retention time for metrics
+    retention: "7d" # Default is 10d, adjust as needed
+    maximumStartupDurationSeconds: 600
+
+grafana:
+  enabled: true
+  # adminPassword: "prom-operator" # Default. Change this for production! You can set it during helm install.
+  # For local demo, default is fine.
+  persistence:
+    enabled: false # Set to true for persistent Grafana dashboards and config.
+    # type: pvc
+    # storageClassName: "standard"
+    # accessModes:
+    #   - ReadWriteOnce
+    # size: 2Gi
+  # You can pre-load datasources and dashboards. We'll do this manually for now.
+  # sidecar:
+  #   dashboards:
+  #     enabled: true
+  #     label: grafana_dashboard
+  #     labelValue: "1"
+  #   datasources:
+  #     enabled: true
+  #     label: grafana_datasource
+  #     labelValue: "1"
+
+alertmanager:
+  enabled: false # Disable for simplicity in this initial setup. Can be enabled later.
+
+# Exporters (some are enabled by default)
+# You generally don't need to list these unless you want to change their specific sub-chart values
+# or disable them if they are enabled by default.
+kubeStateMetrics: # Corrected key from "kube государственных показателей"
+  enabled: true
+nodeExporter:
+  enabled: true
+# kubelet: enabled: true # (kubelet metrics are usually scraped directly by Prometheus)
+
+# If the etcd exporter is causing issues and you don't need it for your local demo:
+# You need to find the correct key for etcd in the chart's default values.
+# It's likely something like `kubeEtcd` or `etcd`.
+# Example of disabling it (find the real key first):
+# kubeEtcd:
+#   enabled: false
+
+# Other components (can often be disabled for a simpler setup)
+prometheusOperator:
+  enabled: true # This is the core operator that manages Prometheus, Alertmanager, etc.
+# prometheus-adapter: enabled: false # For custom metrics API
+# thanosRuler: enabled: false
+
+# ... (rest of your values file) ...
+
+kubeEtcd:
+  enabled: false

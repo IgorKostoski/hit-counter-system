@@ -1,0 +1,33 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: hit-counter-api-monitor
+  # It's often best to put the ServiceMonitor in the same namespace as the service it monitors.
+  # Your kube-prometheus-stack is configured to discover ServiceMonitors across namespaces by default.
+  namespace: hit-counter-app 
+  labels:
+    app: hit-counter-api # A general label for this ServiceMonitor
+    # If your Prometheus instance (from kube-prometheus-stack) is configured
+    # with a specific serviceMonitorSelector (e.g., release: prometheus),
+    # you would need to add that label here too.
+    # For the default setup of kube-prometheus-stack where serviceMonitorSelector is {},
+    # this specific 'release' label might not be strictly needed on the SM itself for discovery.
+    # release: prometheus 
+spec:
+  selector:
+    matchLabels:
+      # These labels MUST match the labels on your actual 'hit-counter-api-service'
+      # The service created by your Helm chart will typically have labels like:
+      app.kubernetes.io/name: hit-counter-api
+      app.kubernetes.io/instance: hit-counter-release # This is your Helm release name for the app
+      # You can verify the service labels with:
+      # kubectl get svc -n hit-counter-app -l app.kubernetes.io/instance=hit-counter-release --show-labels
+  namespaceSelector:
+    matchNames:
+      - hit-counter-app # Namespace where the target service (hit-counter-api-service) lives
+  endpoints:
+  - port: http # This MUST match the NAME of the port in your api-service.yml (the service port entry)
+    path: /metrics # Path to scrape metrics from
+    interval: 15s  # Scrape interval (e.g., 15s, 30s)
+    # honorLabels: true # Useful if your metrics already have instance/job labels you want to keep 
+
