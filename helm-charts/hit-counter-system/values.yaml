@@ -7,6 +7,15 @@ api:
     repository: "hit-counter-api"
     pullPolicy: IfNotPresent
     tag: "k8s-v1"
+  ingress:
+    enabled: true
+    host: "hit-counter.local"
+    path: "/api/v1"
+    pathType: Prefix
+    servicePortName: "http"
+
+    tls:
+      enabled: false
 
   service:
     type: NodePort
@@ -57,15 +66,7 @@ tests:
 
 # ... (api, postgresql, tests sections) ...
 
-ingress:
-  enabled: false # This will make the `{{- if .Values.ingress.enabled }}` block in ingress.yaml false
-  # You can leave other ingress sub-keys empty or comment them out if enabled is false
-  # className: ""
-  # annotations: {}
-  # hosts: []
-  # tls: []
 
-# ... (api, postgresql, tests, ingress sections) ...
 
 autoscaling:
   enabled: false # This will make the `{{- if .Values.autoscaling.enabled }}` block in hpa.yaml false
