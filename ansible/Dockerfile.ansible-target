@@ -1,0 +1,37 @@
+# ansible/Dockerfile.ansible-target
+FROM ubuntu:22.04
+
+# Avoid prompts from apt
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install SSH server, sudo, and Python (required by Ansible)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends openssh-server sudo python3 python3-pip && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create an ansible user with sudo privileges and password 'ansible'
+RUN useradd -m -s /bin/bash ansible && \
+    echo "ansible:ansible" | chpasswd && \
+    adduser ansible sudo
+
+# Configure SSH
+# Create the sshd run directory
+RUN mkdir -p /var/run/sshd && \
+    # Allow password authentication for simplicity in this demo
+    # Also ensure UsePAM yes is not overriding PasswordAuthentication
+    sed -i 's/^#?PasswordAuthentication .*/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    sed -i 's/^#?UsePAM .*/UsePAM yes/' /etc/ssh/sshd_config && \
+    # Allow root login via password for simplicity in debugging if needed, though not ideal for prod
+    sed -i 's/^#?PermitRootLogin .*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    # Ensure ChallengeResponseAuthentication is no if PasswordAuthentication is yes for some systems
+    echo "ChallengeResponseAuthentication no" >> /etc/ssh/sshd_config
+
+# Ensure correct permissions for sshd run directory (though usually handled by package)
+RUN chmod 0755 /var/run/sshd
+
+# Expose SSH port (This is a Dockerfile instruction, not part of RUN)
+EXPOSE 22
+
+# Command to start SSH daemon
+CMD ["/usr/sbin/sshd", "-D"]
