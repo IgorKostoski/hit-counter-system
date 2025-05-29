@@ -1,0 +1,130 @@
+# azure-pipelines.yml
+
+trigger:
+  branches:
+    include:
+      - main # Trigger pipeline on pushes to the main branch
+  paths:
+    include:
+      - app/api/*             # Changes in Go app source
+      - helm-charts/hit-counter-system/* # Changes in Helm chart
+      - azure-pipelines.yml   # Changes to the pipeline itself
+
+pool:
+  vmImage: 'ubuntu-latest' # Use a Microsoft-hosted agent with Ubuntu
+
+variables:
+  # --- Go Application Variables ---
+  goVersion: '1.21' # Match your Go version
+  goAppPath: 'app/api' # Path to your Go application
+
+  # --- Docker Variables ---
+  # Replace with your Docker Hub username or Azure Container Registry (ACR) name if using them
+  # For portfolio, we can simulate.
+  dockerRegistryServiceConnection: '' # Azure DevOps service connection for Docker registry (e.g., to ACR or Docker Hub)
+  imageRepository: 'yourusername/hit-counter-api' # e.g., myacr.azurecr.io/hit-counter-api OR yourdockerhubuser/hit-counter-api
+  dockerfilePath: '$(Build.SourcesDirectory)/$(goAppPath)/Dockerfile'
+  tag: '$(Build.BuildId)' # Use the Azure DevOps Build ID for unique image tagging
+
+  # --- Helm Chart Variables ---
+  helmChartPath: 'helm-charts/hit-counter-system'
+  # For portfolio, we can simulate publishing.
+  # helmArtifactFeed: '' # Azure Artifacts feed name if publishing Helm chart there
+  # helmConnectedServiceName: '' # Service connection for Azure Artifacts
+
+stages:
+  - stage: Build
+    displayName: 'Build and Package'
+    jobs:
+      - job: BuildGoAppAndDockerImage
+        displayName: 'Build Go App, Docker Image, and Helm Chart'
+        steps:
+          - task: GoTool@0
+            inputs:
+              version: '$(goVersion)'
+            displayName: 'Install Go $(goVersion)'
+
+          - script: |
+              cd $(goAppPath)
+              go vet ./...
+              go test -v ./... # Uncomment if you add Go tests
+              go build -v -o hit-counter-api .
+            displayName: 'Vet, Test (Placeholder), and Build Go App'
+            workingDirectory: '$(Build.SourcesDirectory)'
+
+          - task: Docker@2
+            displayName: 'Build Docker Image'
+            inputs:
+              command: 'build'
+              repository: '$(imageRepository)'
+              dockerfile: '$(dockerfilePath)'
+              buildContext: '$(Build.SourcesDirectory)/$(goAppPath)' # Set build context to the app directory
+              tags: |
+                $(tag)
+                latest
+              # arguments: '--build-arg VERSION=$(tag)' # Example if your Dockerfile uses build args
+
+          - script: |
+              echo "TODO: Push Docker image $(imageRepository):$(tag) to a container registry."
+              echo "Example for Docker Hub: docker login -u $(DOCKER_HUB_USER) -p $(DOCKER_HUB_PAT); docker push $(imageRepository):$(tag)"
+              echo "Example for ACR: az acr login --name <yourACRname>; docker push $(imageRepository):$(tag)"
+              # In a real pipeline, you'd use Docker@2 task with 'push' command
+              # and a configured $(dockerRegistryServiceConnection).
+            displayName: 'Simulate Docker Image Push'
+
+          - task: HelmInstaller@1
+            displayName: 'Install Helm'
+            inputs:
+              helmVersionToInstall: 'latest' # Or a specific version
+
+          - script: |
+              helm lint $(helmChartPath)
+              helm package $(helmChartPath) -d $(Build.ArtifactStagingDirectory)/helm
+            displayName: 'Lint and Package Helm Chart'
+            workingDirectory: '$(Build.SourcesDirectory)'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Helm Chart Artifact'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/helm'
+              ArtifactName: 'helm-chart'
+              publishLocation: 'Container'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Go Binary (Optional)'
+            inputs:
+              PathtoPublish: '$(Build.SourcesDirectory)/$(goAppPath)/hit-counter-api'
+              ArtifactName: 'go-binary'
+              publishLocation: 'Container'
+
+  - stage: Deploy_Dev # Example deployment stage
+    displayName: 'Deploy to Development (Simulated)'
+    dependsOn: Build
+    condition: succeeded() # Only run if Build stage succeeded
+    jobs:
+      - job: DeployToK8s
+        displayName: 'Simulate Helm Deploy to K8s'
+        steps:
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download Helm Chart Artifact'
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'helm-chart'
+              downloadPath: '$(System.ArtifactsDirectory)'
+
+          - script: |
+              echo "Simulating Helm deployment..."
+              echo "Downloaded Helm chart is in $(System.ArtifactsDirectory)/helm-chart/"
+              ls -R $(System.ArtifactsDirectory)/helm-chart/
+              echo "In a real pipeline, you would use HelmDeploy task or kubectl task."
+              echo "Example:"
+              echo "helm upgrade --install hit-counter-release $(System.ArtifactsDirectory)/helm-chart/hit-counter-system-*.tgz \\"
+              echo "  --namespace hit-counter-app \\"
+              echo "  --set image.repository=$(imageRepository) \\" # Note: This uses imageRepository from variables
+              echo "  --set image.tag=$(tag) \\"                   # This uses BuildId tag
+              echo "  --set api.ingress.host='dev.hit-counter.mydomain.com' \\"
+              echo "  --reuse-values"
+              echo "  # ... plus other values for the dev environment."
+              echo "This would require the agent to have kubectl configured for the target K8s cluster."
+            displayName: 'Simulate Helm Deploy'

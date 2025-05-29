@@ -11,9 +11,9 @@
     environment_label: "demo"
     config_data:
       app.properties: |
-        greeting=Hello from Ansible-managed ConfigMap!
+        greeting=Hello from Ansible-managed ConfigMap! (Updated)
         environment={{ environment_label }}
-      another.setting: "SomeValue123"
+      another.setting: "SomeNewValue123"
 
   tasks:
     # - name: Ensure Kubernetes namespace exists (optional, if not default)
