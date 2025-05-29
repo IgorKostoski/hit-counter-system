@@ -58,7 +58,7 @@ containerization, Kubernetes, Infrastructure as Code (IaC), monitoring, artifact
 
 ## Project Structure
 
-```mermaid
+```bash
 hit-counter-system/
     ├── app/ # Go application source
     │ ├── api/ # Main API service (main.go, handlers.go, db.go, Dockerfile)
