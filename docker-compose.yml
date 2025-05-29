@@ -58,6 +58,21 @@ services:
     networks:
       - hitcounter_network
 
+  nexus:
+    image: sonatype/nexus3:3.68.1
+    container_name: hit-counter-nexus
+    ports:
+      - "8081:8081"
+      - "8082:8082"
+    volumes:
+      - nexus_data:/nexus-data
+    environment:
+      - INSTALL4J_ADD_VM_PARAMS=-Xms512m -Xmx1024m -XX:MaxDirectMemorySize=1024m -Djava.util.prefs.userRoot=/nexus-data/javaprefs
+    restart: unless-stopped
+    networks:
+      - hitcounter_network
+
+
 
 
 networks:
@@ -66,4 +81,6 @@ networks:
 
 volumes:
   postgres_data:
+    driver: local
+  nexus_data:
     driver: local
