@@ -1,0 +1,54 @@
+# ansible/k8s_configmap_playbook.yml
+---
+- name: Manage Kubernetes ConfigMap with Ansible
+  hosts: kubernetes_cluster
+  gather_facts: no
+
+  vars:
+    configmap_name: "ansible-managed-cm"
+    target_namespace: "default"
+    app_label: "hit-counter-system"
+    environment_label: "demo"
+    config_data:
+      app.properties: |
+        greeting=Hello from Ansible-managed ConfigMap!
+        environment={{ environment_label }}
+      another.setting: "SomeValue123"
+
+  tasks:
+    # - name: Ensure Kubernetes namespace exists (optional, if not default)
+    #   # This uses the kubernetes.core.k8s_namespace module if you have it,
+    #   # or you can use the generic k8s module.
+    #   # For simplicity if just using default, you can skip this task.
+    #   # If targeting 'hit-counter-app' namespace:
+    #   # kubernetes.core.k8s:
+    #   #   state: present
+    #   #   definition:
+    #   #     apiVersion: v1
+    #   #     kind: Namespace
+    #   #     metadata:
+    #   #       name: "{{ namespace }}"
+    #   #       labels:
+    #   #         created-by: ansible
+    #   when: namespace != "default"
+
+    - name: Create or Update ConfigMap
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: "{{ configmap_name }}"
+            namespace: "{{ target_namespace }}"
+            labels:
+              app: "{{ app_label }}"
+              environment: "{{ environment_label }}"
+              managed-by: "ansible"
+          data: "{{ config_data }}"
+      register: cm_result
+
+    - name: Display ConfigMap creation/update result
+      ansible.builtin.debug:
+        var: cm_result
+        verbosity: 1

@@ -47,6 +47,7 @@ override.tf.json
 
 
 # ... other ignored files ...
+.ansible-venv/
 
 # Executables / Binaries
 minikube-darwin-arm64
