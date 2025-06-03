@@ -104,7 +104,7 @@ hit-counter-system/
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/hit-counter-system.git
+git clone https://github.com/IgorKostoski/hit-counter-system.git
 cd hit-counter-system
 ```
 
@@ -131,4 +131,27 @@ docker-compose up -d --build
 # 5. Create repositories in Nexus UI (see "Artifact Management (Nexus)" section below).
 # 6. Configure Docker insecure registry for localhost:8082 (see Nexus section).
 
+```
+
+### 4.Build Application Docker Image (for Kubernetes)
+```bash
+cd app/api
+docker build -t hit-counter-api:k8s-v1 . # Or any tag you prefer
+cd ../..
+```
+
+### 5.Deploy Monitoring Stack (Prometheus & Grafana)
+```bash
+# Create namespace
+kubectl create namespace monitoring
+
+# Install kube-prometheus-stack
+cd monitoring-stack # (Assuming you are in hit-counter-system/ root)
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+helm install prometheus-stack prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  -f ./kube-prometheus-stack-values.yaml \
+  
+cd ..
 ```
